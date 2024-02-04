@@ -1,0 +1,124 @@
+---
+title: 'Homework #3'
+author: "Anthony Yang"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(fig.height=3, fig.width=7, warning=FALSE, message=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=100))
+
+creatinine <- read.csv('creatinine.csv')
+covid <- read.csv('covid.csv')
+market <- read.csv('marketmodel.csv')
+milk <- read.csv('milk.csv')
+
+suppressWarnings({
+  suppressPackageStartupMessages(library(ggplot2))
+  suppressPackageStartupMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(dplyr))
+  suppressPackageStartupMessages(library(mosaic)) 
+})
+```
+
+Link to GitHub Repository: https://github.com/anthonyangg/sds315-homework3
+
+## Problem 1
+
+### Part A
+```{r echo=FALSE}
+creatinine_age = lm(creatclear~age, data=creatinine)
+coef(creatinine_age)
+```
+
+For a 55 year old, we should expect the creatinine clearance to be roughly 113.72 mL/min. The linear regression model is y = -0.6198x + 147.813, so by plugging in 55 for x, we get 113.72 mL/min as an approximate answer. 
+
+### Part B
+
+The creatinine clearance rate change over age is -0.6198 mL/min per year and this was obtained by using the coef() function on the linear regression model created above. 
+
+
+### Part C
+
+The creatinine clearance rate is higher for the 40 year old with heart rate 135 than a 60 year old with heart rate 112. When calculating the 40 year old's creatinine clearance rate using the linear regression model, which is -0.6198x40 + 147.813, it is approximately 123.02 mL/min. Meanwhile the creatinine clearance rate for the 60 year old is 110.62 mL/min shown by -0.6198x60 + 147.813.
+
+
+## Problem 2
+
+The 'beta' of a stock refers to the systematic risk of a certain stock. In other words, for each 1% change in a group of investments (aka market portfolio), the percentage change in an asset's return. The average beta of a stock is 1.0 and anything above this number is generally known as more systematic risk than average. A beta of 0 means that the firm is not reactant to any market change. A negative beta value essentially means that a firm will do really well when the rest of the market is collapsing. This connects to the regression model modeling an asset's rate of return because the beta is the slope in this model which when x goes up by 1% or down by 1%, the rate of return will increase or decrease dependent on the beta or slope. 
+
+```{r echo=FALSE}
+apple <- lm(SPY~AAPL, data=market)
+google <- lm(SPY~GOOG, data = market)
+merck <- lm(SPY~MRK, data=market)
+johnson <- lm(SPY~JNJ, data=market)
+walmart <- lm(SPY~WMT, data=market)
+target <- lm(SPY~TGT, data=market)
+
+appler = summary(apple)$r.squared
+appleintercept = coef(apple)[1]
+appleslope = coef(apple)[2]
+
+googler = summary(google)$r.squared
+googleintercept = coef(google)[1]
+googleslope = coef(google)[2]
+
+merckr = summary(merck)$r.squared
+merckintercept = coef(merck)[1]
+merckslope = coef(merck)[2]
+
+johnsonr = summary(johnson)$r.squared
+johnsonintercept = coef(johnson)[1]
+johnsonslope = coef(johnson)[2]
+
+walmartr = summary(walmart)$r.squared
+walmartintercept = coef(walmart)[1]
+walmartslope = coef(walmart)[2]
+
+targetr = summary(target)$r.squared
+targetintercept = coef(target)[1]
+targetslope = coef(target)[2]
+
+tribble(
+  ~'Ticker', ~'Alpha', ~'Beta', ~'R squared',
+  'AAPL', appleintercept, appleslope, appler,
+  'GOOG', googleintercept, googleslope, googler,
+  'MRK', merckintercept, merckslope, merckr,
+  'JNJ', johnsonintercept, johnsonslope, johnsonr,
+  'WMT', walmartintercept, walmartslope, walmartr,
+  'TGT', targetintercept, targetslope, targetr
+)
+```
+
+The table above shows the intercepts (alpha), slopes (beta), and r-squared values of each stock based on the linear regression model. Johnson and Johnson has the highest beta or the highest systematic risk meanwhile Apple has the lowest beta or the lowest systematic risk. 
+
+
+## Problem 3
+
+```{r echo=FALSE}
+italy <- filter(covid, country=='Italy')
+spain <- filter(covid, country=='Spain')
+
+lm_italy <- lm(log(deaths)~days_since_first_death, data=italy)
+lm_spain <- lm(log(deaths)~days_since_first_death, data=spain)
+
+ggplot(covid) + geom_line(aes(x=days_since_first_death, y=log(deaths), color=country)) +
+  xlab("Days since first death") + ylab("Number of Deaths (log scale, base e)") + 
+  ggtitle("Number of Deaths since days of first death (log scale, base e)") + theme_classic()
+```
+
+The estimated growth rate and doubling time for Italy are respectively 0.183 deaths per day since day of first death and approximately 4 days. The estimated growth rate and doubling time for Spain are respectively 0.276 deaths per day since day of first death and approximately 3 days. 
+
+
+## Problem 4
+
+```{r echo=FALSE}
+lm_milk <- lm(log(sales)~log(price), data=milk)
+lm_milk
+
+ggplot(milk) + geom_point(aes(x=log(price),y=log(sales))) + geom_smooth(aes(x=log(price),y=log(sales)), method='lm') + xlab("log(price)") + 
+  ylab("log(sales)") + ggtitle("Log of Milk sales based on Log of Milk Price") + 
+  theme_classic()
+```
+
+The estimated price elasticity of demand of milk is approximately -1.619. What I did was using the lm function, I took the log of the price and sales because there were too many points that were outside of the line of best fit for just the graph of price vs. sales and log(sales) vs. price. 
